@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-#-*-coding:cp936-*-
+# -*- coding: UTF-8 -*-
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
 import wx
+import os
 from docctrl import *
 
 class ImageDisplay(wx.Frame):
@@ -21,15 +22,15 @@ class ImageDisplay(wx.Frame):
         #features display
         panel = wx.Panel(self, -1)
         type_label = wx.StaticText(panel, -1, "Type")
-        type_text = wx.TextCtrl(panel, -1,"Here is a looooooooooooooon") #´´½¨Ò»¸öÎÄ±¾¿Ø¼þ
-        type_text.SetInsertionPoint(0) #ÉèÖÃ²åÈëµã
+        type_text = wx.TextCtrl(panel, -1,"Here is a looooooooooooooon")
+        type_text.SetInsertionPoint(0) #ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½
         # richLabel = wx.StaticText(panel, -1, "Rich Text")
-        # richText = wx.TextCtrl(panel, -1,"If supported by the native control, this is reversed, and this is a different font.", style=wx.TE_MULTILINE|wx.TE_RICH2) #´´½¨·á¸»ÎÄ±¾¿Ø¼þ
+        # richText = wx.TextCtrl(panel, -1,"If supported by the native control, this is reversed, and this is a different font.", style=wx.TE_MULTILINE|wx.TE_RICH2) #ï¿½ï¿½ï¿½ï¿½ï¿½á¸»ï¿½Ä±ï¿½ï¿½Ø¼ï¿½
         # richText.SetInsertionPoint(0)
-        # richText.SetStyle(44, 52, wx.TextAttr("white", "black")) #ÉèÖÃÎÄ±¾ÑùÊ½
+        # richText.SetStyle(44, 52, wx.TextAttr("white", "black")) #ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½Ê½
         # points = richText.GetFont().GetPointSize()
-        # f = wx.Font(points + 3, wx.ROMAN, wx.ITALIC, wx.BOLD, True) #´´½¨Ò»¸ö×ÖÌå
-        # richText.SetStyle(68, 82, wx.TextAttr("blue", wx.NullColour, f)) #ÓÃÐÂ×ÖÌåÉèÖÃÑùÊ½
+        # f = wx.Font(points + 3, wx.ROMAN, wx.ITALIC, wx.BOLD, True) #ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        # richText.SetStyle(68, 82, wx.TextAttr("blue", wx.NullColour, f)) #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 
         # sizer = wx.FlexGridSizer(cols=3, hgap=6, vgap=6)
         # sizer.Add(self.tree, 0, wx.EXPAND)
@@ -51,23 +52,23 @@ class ImageDisplay(wx.Frame):
         panel.SetSizer(sizer)
         panel.Fit()
 
-
-
-
-
-
 class MainFrame(wx.Frame):
     def __init__(self):
+        #class tree  {name, keyword, tree node object}
+        self.c_tree = []
         self.image_win = None
         self.docctrl=docctrl()
         wx.Frame.__init__(self, None, title="simple tree", size=(400, 700))
         # Create the tree
         self.tree = wx.TreeCtrl(self)
         # Add a root node
-        root = self.tree.AddRoot(unicode(u"???????"))
+        root = self.tree.AddRoot(unicode(u"æ‰€æœ‰ç±»åˆ«"))
         # Add nodes from our data set
         #self.AddTreeNodes(root, self.docctrl.update_doc_data())
-        self.UpdateTree(root, self.docctrl.update_doc_data())
+        self.build_class_tree('',root, self.docctrl.get_class_definition())
+        self.claasify_files(self.docctrl.get_files_list())
+
+        #self.UpdateTree(root, self.docctrl.update_doc_data())
         # Expand the first level
         self.tree.Expand(root)
         # Bind some interesting events
@@ -76,6 +77,23 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self.tree)
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivated, self.tree)
 
+    #pc_str-parent class str, cd-class definition
+    def build_class_tree(self, pc_str, parenttree, cd):
+        for c_item in cd:
+            if c_item:
+                class_str = pc_str + '->' + c_item['name']
+                sc_node = self.tree.AppendItem(parenttree, unicode(c_item['name']))
+                self.c_tree.append({'name':class_str, 'kw':c_item['kw'], 'node':sc_node})
+                if c_item['sc']:
+                    self.build_class_tree(class_str,sc_node, c_item['sc'])
+
+    def classify_files(self, files_list):
+        for file in files_list:
+            for c in self.c_tree:
+
+
+
+            print os.path.basename(file)
 
 
     #Type and Description window
@@ -84,7 +102,7 @@ class MainFrame(wx.Frame):
             typenode = self.tree.AppendItem(root, unicode(type))
             for file in data[type]:
                 id = wx.NewId()
-                a = self.tree.AppendItem(typenode, unicode(file['file']),data= wx.TreeItemData(file['path']))
+                a = self.tree.pendItem(typenode, unicode(file['file']),data= wx.TreeItemData(file['path']))
                 print file['file'],a
 
     def AddTreeNodes(self, parentItem, items):
