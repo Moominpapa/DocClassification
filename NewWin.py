@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+#-*- encoding:UTF-8 -*-
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
@@ -13,14 +13,15 @@ class NewWin(wx.Dialog):
     def __init__(self, owner_list, class_list, unpacked_file_list, packed_file_list = [], win_title = u"新建文件", file_name = "", packed_file_id = -1, cs = "", owner = "",de="", time = "" ):
         wx.Dialog.__init__(self, None, -1, win_title,pos=(0,0), size=(1000, 2500))
         self.unpacked_files= copy.deepcopy(unpacked_file_list)
-        packed_file_list = copy.deepcopy(packed_file_list)
-        self.packed_files = []
-        if packed_file_id >= 0:#valid packed file id
-            for i in range(0, len(packed_file_list)):
-                if packed_file_list[i] == None:
-                    self.packed_files.append(None)
-                else:
-                    self.packed_files.append({'files':packed_file_list[i],'name':u'%s-第%d页'% (file_name,i + 1), 'packed_file_id':packed_file_id})
+        self.packed_files = copy.deepcopy(packed_file_list)
+        # packed_file_list = copy.deepcopy(packed_file_list)
+        # self.packed_files = []
+        # if packed_file_id >= 0:#valid packed file id
+        #     for i in range(0, len(packed_file_list)):
+        #         if packed_file_list[i] == None:
+        #             self.packed_files.append(None)
+        #         else:
+        #             self.packed_files.append({'files':packed_file_list[i],'name':u'%s-第%d页'% (file_name,i + 1), 'packed_file_id':packed_file_id})
         self.image_win = None
 
         self.class_label = wx.StaticText(self, -1, u"类别")
@@ -54,15 +55,15 @@ class NewWin(wx.Dialog):
         for i in range(0,len(unpacked_file_list)):
             self.unpacked_file_list.InsertStringItem(i, self.unpacked_files[i]['name'])
 
-        self.packed_file_list_label = wx.StaticText(self, -1, u"文件列表")
-        self.packed_file_list = wx.ListCtrl(self, -1, style=wx.LC_REPORT)
-        self.packed_file_list.InsertColumn(0, u"名字")
-        self.packed_file_list.SetColumnWidth(0, 200)#设置列的宽度
+        self.packed_file_list_ctrl_label = wx.StaticText(self, -1, u"文件列表")
+        self.packed_file_list_ctrl = wx.ListCtrl(self, -1, style=wx.LC_REPORT)
+        self.packed_file_list_ctrl.InsertColumn(0, u"名字")
+        self.packed_file_list_ctrl.SetColumnWidth(0, 200)#设置列的宽度
         for i in range(0,len(packed_file_list)):
-            if packed_file_list[i] == None:
-                self.packed_file_list.InsertStringItem(i, u"空白页")
+            if self.packed_files[i] == None:
+                self.packed_file_list_ctrl.InsertStringItem(i, u"空白页")
             else:
-                self.packed_file_list.InsertStringItem(i, self.packed_files[i]['name'])
+                self.packed_file_list_ctrl.InsertStringItem(i, self.packed_files[i]['name'])
 
         insertButton = wx.Button(self, -1, u"添加文件")
         moveupButton = wx.Button(self, -1, u"上移")
@@ -87,8 +88,8 @@ class NewWin(wx.Dialog):
         sizer.Add(self.cal, pos = (9,1), span = (3,3), flag = wx.EXPAND)
         sizer.Add(self.unpacked_file_list_label, pos = (1,5), span = (1,1))
         sizer.Add(self.unpacked_file_list, pos=(2,5), span=(5,3), flag = wx.EXPAND)
-        sizer.Add(self.packed_file_list_label, pos = (7,5), span = (1,1))
-        sizer.Add(self.packed_file_list, pos=(8,5), span=(5,3), flag = wx.EXPAND)
+        sizer.Add(self.packed_file_list_ctrl_label, pos = (7,5), span = (1,1))
+        sizer.Add(self.packed_file_list_ctrl, pos=(8,5), span=(5,3), flag = wx.EXPAND)
         sizer.Add(insertButton, pos = (2,8), span = (1,1))
         sizer.Add(moveupButton, pos = (8,8), span = (1,1))
         sizer.Add(movednButton, pos = (9,8), span = (1,1))
@@ -106,7 +107,7 @@ class NewWin(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnDelClick, delButton)
         self.Bind(wx.EVT_BUTTON, self.OnInsertBlankClick, insertBlankButton)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnUnpackedSelect, self.unpacked_file_list)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnpackedSelect, self.packed_file_list)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnpackedSelect, self.packed_file_list_ctrl)
 
     def OnOKClick(self,evt):
         if self.name_text.GetValue() == '':
@@ -123,7 +124,7 @@ class NewWin(wx.Dialog):
 
     def OnMpClick(self,evt):
         selected_list = []
-        item = self.packed_file_list.GetFirstSelected()
+        item = self.packed_file_list_ctrl.GetFirstSelected()
         pre_item = item - 1
         while item >= 0:
             if not (item - pre_item) == 1:
@@ -132,7 +133,7 @@ class NewWin(wx.Dialog):
                 dlg.ShowModal()
             selected_list.append(item)
             pre_item = item
-            item = self.packed_file_list.GetNextSelected(item)
+            item = self.packed_file_list_ctrl.GetNextSelected(item)
         if selected_list:
             if selected_list[0] == 0:
                 dlg = wx.MessageDialog(None, u"已经在最前面，无法执行上移操作",u"输入错误",wx.OK | wx.ICON_EXCLAMATION)
@@ -141,17 +142,17 @@ class NewWin(wx.Dialog):
                 start_row = selected_list[0]
                 end_row = selected_list[len(selected_list) - 1]
                 md_row = self.packed_files[start_row - 1]
-                self.packed_file_list.DeleteItem(start_row - 1)
+                self.packed_file_list_ctrl.DeleteItem(start_row - 1)
                 del(self.packed_files[start_row - 1])
                 if md_row == None:
-                    self.packed_file_list.InsertStringItem(end_row, u'空白页')
+                    self.packed_file_list_ctrl.InsertStringItem(end_row, u'空白页')
                 else:
-                    self.packed_file_list.InsertStringItem(end_row, md_row['name'])
+                    self.packed_file_list_ctrl.InsertStringItem(end_row, md_row['name'])
                 self.packed_files.insert(end_row,md_row)
 
     def OnMdClick(self,evt):
         selected_list = []
-        item = self.packed_file_list.GetFirstSelected()
+        item = self.packed_file_list_ctrl.GetFirstSelected()
         pre_item = item - 1
         while item >= 0:
             if not (item - pre_item) == 1:
@@ -160,7 +161,7 @@ class NewWin(wx.Dialog):
                 dlg.ShowModal()
             selected_list.append(item)
             pre_item = item
-            item = self.packed_file_list.GetNextSelected(item)
+            item = self.packed_file_list_ctrl.GetNextSelected(item)
         if selected_list:
             if selected_list[len(selected_list) - 1] == (len( self.packed_files) - 1):
                 dlg = wx.MessageDialog(None, u"已经在最后面，无法执行下移操作",u"输入错误",wx.OK | wx.ICON_EXCLAMATION)
@@ -169,20 +170,20 @@ class NewWin(wx.Dialog):
                 start_row = selected_list[0]
                 end_row = selected_list[len(selected_list) - 1]
                 mu_row = self.packed_files[end_row + 1]
-                self.packed_file_list.DeleteItem(end_row + 1)
+                self.packed_file_list_ctrl.DeleteItem(end_row + 1)
                 del(self.packed_files[end_row + 1])
                 if mu_row == None:
-                    self.packed_file_list.InsertStringItem(end_row, u'空白页')
+                    self.packed_file_list_ctrl.InsertStringItem(end_row, u'空白页')
                 else:
-                    self.packed_file_list.InsertStringItem(end_row, mu_row['name'])
+                    self.packed_file_list_ctrl.InsertStringItem(end_row, mu_row['name'])
                 self.packed_files.insert(start_row,mu_row)
 
     def OnDelClick(self,evt):
         selected_list = []
-        item = self.packed_file_list.GetFirstSelected()
+        item = self.packed_file_list_ctrl.GetFirstSelected()
         while item >= 0:
             selected_list.append(item)
-            item = self.packed_file_list.GetNextSelected(item)
+            item = self.packed_file_list_ctrl.GetNextSelected(item)
 
         for i in range(0,len(selected_list)):
             selected_list[i] -= i
@@ -192,24 +193,24 @@ class NewWin(wx.Dialog):
                 cur_row = self.unpacked_file_list.GetItemCount()
                 self.unpacked_file_list.InsertStringItem(cur_row, self.packed_files[index]['name'])
                 self.unpacked_files.append(self.packed_files[index])
-                #self.packed_file_list.SetStringItem(cur_row, 1, )
-            self.packed_file_list.DeleteItem(index)
+                #self.packed_file_list_ctrl.SetStringItem(cur_row, 1, )
+            self.packed_file_list_ctrl.DeleteItem(index)
             del(self.packed_files[index])
 
     def OnInsertBlankClick(self, evt):
-        item = self.packed_file_list.GetFirstSelected()
+        item = self.packed_file_list_ctrl.GetFirstSelected()
         last_item = item
         while item >= 0:
             last_item = item
-            item = self.packed_file_list.GetNextSelected(item)
+            item = self.packed_file_list_ctrl.GetNextSelected(item)
 
         #get last selected item
         if last_item >= 0:
             #in first page
-            self.packed_file_list.InsertStringItem(last_item, u'空白页')
+            self.packed_file_list_ctrl.InsertStringItem(last_item, u'空白页')
             self.packed_files.insert(last_item, None)
         else:
-            self.packed_file_list.InsertStringItem(0, u'空白页')
+            self.packed_file_list_ctrl.InsertStringItem(0, u'空白页')
             self.packed_files.insert(0, None)
 
     def OnInsertClick(self,evt):
@@ -223,11 +224,11 @@ class NewWin(wx.Dialog):
             selected_list[i] -= i
 
         for index in selected_list:
-            cur_row = self.packed_file_list.GetItemCount()
+            cur_row = self.packed_file_list_ctrl.GetItemCount()
             #u"第%s页" % cur_row
-            self.packed_file_list.InsertStringItem(cur_row, self.unpacked_files[index]['name'])
+            self.packed_file_list_ctrl.InsertStringItem(cur_row, self.unpacked_files[index]['name'])
             self.packed_files.append(self.unpacked_files[index])
-            #self.packed_file_list.SetStringItem(cur_row, 1, )
+            #self.packed_file_list_ctrl.SetStringItem(cur_row, 1, )
             self.unpacked_file_list.DeleteItem(index)
             del(self.unpacked_files[index])
 
@@ -251,7 +252,9 @@ class NewWin(wx.Dialog):
 
     def GetNewData(self):
         return {'name':self.name_text.GetValue(), "class":self.class_choice.GetStringSelection(),\
-                'de':self.de_text.GetValue(), "owner":self.owner_choice.GetStringSelection(), "time":self.cal.GetDate().FormatISODate(), "packed_files":self.packed_files}
+                'de':self.de_text.GetValue(), "owner":self.owner_choice.GetStringSelection(), \
+                "time":self.cal.GetDate().FormatISODate(), "packed_files":self.packed_files, \
+                "unpacked_files":self.unpacked_files}
 
 if __name__ == '__main__':
     app = wx.PySimpleApp(redirect=True)

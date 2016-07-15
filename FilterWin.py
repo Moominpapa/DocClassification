@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+#-*- encoding:UTF-8 -*-
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
@@ -54,7 +54,6 @@ class FilterWin(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnOKClick, okButton)
         self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckItem, self.class_choice)
         self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckItem, self.owner_choice)
-
 
     def OnWinShow(self,evt):
         self.class_choice.SetChecked(self.class_selections)

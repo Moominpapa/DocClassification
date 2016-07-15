@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+#-*- encoding:UTF-8 -*-
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
@@ -14,6 +14,7 @@ from FilterWin import *
 from EditWin import *
 from NewWin import *
 from ImageWin import *
+from OwnerWin import *
 
 #Colum list
 col_def = ({'name':u"文件",'width':200,'def':'name'},\
@@ -34,7 +35,7 @@ class MainTreeList(wx.Frame):
         #windows handler
         self.image_win = None
         self.filter_win  = None
-        wx.Frame.__init__(self, None, title="simple tree", pos = (0,0), size=(600, 700))
+        wx.Frame.__init__(self, None, title=u"文档管理", pos = (0,0), size=(600, 700))
         #create image list
         il = wx.ImageList(16,16)
         # add image to list
@@ -73,10 +74,16 @@ class MainTreeList(wx.Frame):
         menuBar.Append(menu, u"编辑")# 添加菜单到菜单栏
         new_menu = menu.Append(-1, u"创建")
         edit_menu = menu.Append(-1, u"修改")
-        remove_menu = menu.Append(-1, u"删除")
-        self.Bind(wx.EVT_MENU, self.OnMenuFilter,filter_menu )
-        self.Bind(wx.EVT_MENU, self.OnNew, new_menu)
-        self.Bind(wx.EVT_MENU, self.OnEdit, edit_menu)
+        #remove_menu = menu.Append(-1, u"删除")
+        menu = wx.Menu()# 创建一个菜单
+        menuBar.Append(menu, u"配置")# 添加菜单到菜单栏
+        cfg_owner_menu = menu.Append(-1, u"人员列表")
+        cfg_class_menu = menu.Append(-1, u"文档类别")
+        self.Bind(wx.EVT_MENU, self.OnMenuFilter,filter_menu)
+        self.Bind(wx.EVT_MENU, self.OnFileNew, new_menu)
+        self.Bind(wx.EVT_MENU, self.OnFileEdit, edit_menu)
+        self.Bind(wx.EVT_MENU, self.OnCfgOwner, cfg_owner_menu)
+        self.Bind(wx.EVT_MENU, self.OnCfgClass, cfg_class_menu)
         self.SetMenuBar(menuBar)
 
     def UpdateTree(self):
@@ -128,9 +135,13 @@ class MainTreeList(wx.Frame):
             else:
                 if self.image_win == None:
                     self.image_win = ImageWin(self, data['file'])
+                    self.Bind(wx.EVT_CLOSE, self.OnImageWinClosed, self.image_win)
                 else:
                     self.image_win.load_image(data['file'])
                 self.image_win.Show()
+
+    def OnImageWinClosed(self, evt):
+        print "image win closed"
 
     def OnActivated(self, evt):
         print "OnActivated: ", self.GetItemText(evt.GetItem())
@@ -147,25 +158,41 @@ class MainTreeList(wx.Frame):
     def OnMenuSearch(self,evt):
         self.OnEdit('')
 
-    def OnNew(self,evt):
-        new_win = NewWin(self.owner_list,self.c_tree.keys(),self.unpacked_file_list)
+    #file control
+    def OnFileNew(self,evt):
+        new_win = NewWin(self.docctrl.get_owner_list(),self.c_tree.keys(),self.unpacked_file_list)
         result = new_win.ShowModal()
         if result  == wx.ID_OK:
-            self.docctrl.pack_file(new_win.GetNewData())
+            new_file = new_win.GetNewData()
+            new_file['id'] = -1
+            self.docctrl.pack_file(new_file)
             self.UpdateTree()
 
-    def OnEdit(self, evt):
+    def OnFileEdit(self, evt):
         item_data =  self.tree.GetItemPyData(self.tree.GetSelection())
         data = item_data['file']
         if data and item_data['type'] == 'file_group_node':
-            edit_win = NewWin(self.owner_list,self.c_tree.keys(),self.unpacked_file_list, packed_file_list = data['files'], \
+            edit_win = NewWin(self.docctrl.get_owner_list(),self.c_tree.keys(),self.unpacked_file_list, packed_file_list = data['files'], \
                     win_title = u"编辑文件", file_name = data['name'], packed_file_id=data['id'],cs = data['class'], owner = data['owner'],de=data['de'], time = data['time'])
             result = edit_win.ShowModal()
-            data = edit_win.GetNewData()
-            print data
+            if result  == wx.ID_OK:
+                new_file = edit_win.GetNewData()
+                new_file['id'] = data['id']
+                self.docctrl.pack_file(new_file)
+                self.UpdateTree()
         else:
             dlg = wx.MessageDialog(None, u"请选择可修改的文档",u"输入错误",wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
+
+    #system configuration
+    def OnCfgOwner(self,evt):
+        owner_win = OwnerWin(self.docctrl.get_owner_list())
+        result = owner_win.ShowModal()
+        if result  == wx.ID_OK:
+            self.docctrl.set_owner_list(owner_win.GetNewData())
+
+    def OnCfgClass(self,evt):
+        pass
 
     #============================tree===================================================
     #get file list from doc module and verify its format
@@ -305,11 +332,9 @@ class MainApp(wx.App):
         wx.App.__init__(self, redirect, filename)
 
     def OnInit(self):
-        print u"APP对象的OnInit方法（OnInit）"
         self.frame = MainTreeList()
         self.frame.Show()
         self.SetTopWindow(self.frame)
-        print >> sys.stderr, u"输出到标准错误控制台。"
         return True
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+#-*- encoding:UTF-8 -*-
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
