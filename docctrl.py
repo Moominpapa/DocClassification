@@ -3,11 +3,13 @@
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
+import wx
 import sys
 import os
 import datetime
 import copy
-import json
+import toolFunc
+
 
 # data_str_format = "%Y-%m-%d"
 #
@@ -57,8 +59,8 @@ files_list_file_name = 'files_cfg.json'
 
 class docctrl():
     def __init__(self):
-        self.sys_cfg = self.json_read_file(sys_cfg_file_name)
-        self.files_list = self.json_read_file(files_list_file_name)
+        self.sys_cfg = toolFunc.json_read_file(sys_cfg_file_name)
+        self.files_list = toolFunc.json_read_file(files_list_file_name)
 
     def get_class_definition(self):
         return copy.deepcopy(self.sys_cfg['class_definition'][0])
@@ -95,9 +97,17 @@ class docctrl():
 
     def set_owner_list(self, OwnerList):
         self.sys_cfg['OwnerList'] = copy.deepcopy(OwnerList)
-        self.json_store_file(sys_cfg_file_name, self.sys_cfg)
+        toolFunc.json_store_file(sys_cfg_file_name, self.sys_cfg)
+
+    def get_scan_path_list(self):
+        return copy.deepcopy(self.sys_cfg['file_scan_path'])
+
+    def set_scan_path_list(self, PathList):
+        self.sys_cfg['file_scan_path'] = copy.deepcopy(PathList)
+        toolFunc.json_store_file(sys_cfg_file_name, self.sys_cfg)
 
     def parse_file(self):
+        self.files_list['UnpackedFileList'] = toolFunc.get_files_list(self.sys_cfg['file_scan_path'], ['jpg','JPG'])
         self.update_id(self.files_list['PackedFileList'])
         self.update_id(self.files_list['UnpackedFileList'])
 
@@ -118,7 +128,14 @@ class docctrl():
             new_file = PackedFileList[pack_file['id']]
         file_id_list = []
         pack_file_list = pack_file['packed_files']
+        #rename pack files to *docs
+        for file in pack_file_list:
+            if not file['files'].endswith('sdoc'):
+                os.rename(file['files'], file['files'] + 'sdoc')
+                file['files'] += 'sdoc'
 
+
+        #get files remove from the pack file
         i = 1
         for file in pack_file_list:
             if file == None:
@@ -141,18 +158,7 @@ class docctrl():
             if file.has_key('page'):
                 UnpackedFileList.append({'files':file['files'], 'name':os.path.basename(file['files'])})
         self.update_id(UnpackedFileList)
-        self.json_store_file(files_list_file_name, self.files_list)
-
-    def json_store_file(self,name, json_file):
-        with open(name, 'w') as f:
-            f.write(json.dumps(json_file))
-
-    def json_read_file(self,name):
-         ret_file = None
-         with open(name, 'r') as f:
-            ret_file = json.load(f)
-         return ret_file
-
+        toolFunc.json_store_file(files_list_file_name, self.files_list)
 
 if __name__ == '__main__':
     app = docctrl()

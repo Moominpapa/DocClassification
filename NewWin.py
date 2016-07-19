@@ -7,7 +7,10 @@ import copy
 import types
 import wx
 import wx.calendar as cal
+import toolFunc
+
 from ImageWin import *
+
 
 class NewWin(wx.Dialog):
     def __init__(self, owner_list, class_list, unpacked_file_list, packed_file_list = [], win_title = u"新建文件", file_name = "", packed_file_id = -1, cs = "", owner = "",de="", time = "" ):
@@ -45,8 +48,10 @@ class NewWin(wx.Dialog):
 
         self.cal_label = wx.StaticText(self, -1, u"形成时间")
         self.cal = cal.CalendarCtrl(self, -1, wx.DateTime_Now(), style = cal.CAL_SHOW_HOLIDAYS| cal.CAL_SEQUENTIAL_MONTH_SELECTION)
-        # if not time == "":
-        #     cal.CalendarCtrl.SetDate(wx.DateTime(time))
+        if not time == '':
+            wxdate = toolFunc.str2wxdate(time)
+            if wxdate:
+                self.cal.SetDate(wxdate)
 
         self.unpacked_file_list_label = wx.StaticText(self, -1, u"未归档文件列表")
         self.unpacked_file_list = wx.ListCtrl(self, -1, style=wx.LC_REPORT)
@@ -108,6 +113,13 @@ class NewWin(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnInsertBlankClick, insertBlankButton)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnUnpackedSelect, self.unpacked_file_list)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnpackedSelect, self.packed_file_list_ctrl)
+        self.Bind(wx.EVT_SHOW, self.OnShow)
+
+    def OnShow(self,evt):
+        if evt.Show == False and self.image_win:
+            self.image_win.Close()
+            self.image_win = None
+        evt.Skip()
 
     def OnOKClick(self,evt):
         if self.name_text.GetValue() == '':
@@ -236,9 +248,9 @@ class NewWin(wx.Dialog):
         file = self.unpacked_files[evt.GetIndex()]
         if file:
             if self.image_win == None:
-                self.image_win = ImageWin(self, file)
+                self.image_win = ImageWin(self, file['files'])
             else:
-                self.image_win.load_image(file)
+                self.image_win.load_image(file['files'])
             self.image_win.Show()
 
     def OnpackedSelect(self,evt):
@@ -253,7 +265,7 @@ class NewWin(wx.Dialog):
     def GetNewData(self):
         return {'name':self.name_text.GetValue(), "class":self.class_choice.GetStringSelection(),\
                 'de':self.de_text.GetValue(), "owner":self.owner_choice.GetStringSelection(), \
-                "time":self.cal.GetDate().FormatISODate(), "packed_files":self.packed_files, \
+                "time":toolFunc.wxdate2str(self.cal.GetDate()), "packed_files":self.packed_files, \
                 "unpacked_files":self.unpacked_files}
 
 if __name__ == '__main__':

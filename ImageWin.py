@@ -18,7 +18,7 @@ class ImageWin(wx.Frame):
 
     def load_image(self,image_path):
         #features display
-        panel = wx.Panel(self, -1)
+        #panel = wx.Panel(self, -1)
         # type_label = wx.StaticText(panel, -1, "Type")
         # type_text = wx.TextCtrl(panel, -1,"Here is a looooooooooooooon")
         # type_text.SetInsertionPoint(0) #���ò����
@@ -35,17 +35,18 @@ class ImageWin(wx.Frame):
         # sizer.AddMany([multiLabel, multiText, richLabel, richText])
 
         image = wx.Image(image_path, type=wx.BITMAP_TYPE_ANY)
-        temp = image.ConvertToBitmap()
-        size= temp.GetWidth(),(temp.GetHeight() + 50)
+        image = image.Scale(image.GetWidth()/2, image.GetHeight()/2)#2 缩小图像
+        img1 = image.ConvertToBitmap()
+        size= img1.GetWidth(),img1.GetHeight()
         self.SetClientSize(size)
-        bmp=wx.StaticBitmap(parent=panel,bitmap=temp)
+        bmp=wx.StaticBitmap(self,bitmap=img1)
 
-        sizer = wx.GridBagSizer(hgap=0, vgap=0)
-        # sizer.Add(type_label, pos=(1,0), span=(1,1),border = 5)
-        # sizer.Add(type_text, pos=(1,2), span=(1,3))
-        # sizer.Add(richLabel, pos=(14,0), span=(2,1), flag=wx.EXPAND)
-        # sizer.Add(richText, pos=(14,2), span=(2,3), flag=wx.EXPAND)
-        sizer.Add(bmp, pos=(2,0), span = (20,10),flag=wx.EXPAND)
-        sizer.AddGrowableRow(15)
-        panel.SetSizer(sizer)
-        panel.Fit()
+        # sizer = wx.GridBagSizer(hgap=0, vgap=0)
+        # # sizer.Add(type_label, pos=(1,0), span=(1,1),border = 5)
+        # # sizer.Add(type_text, pos=(1,2), span=(1,3))
+        # # sizer.Add(richLabel, pos=(14,0), span=(2,1), flag=wx.EXPAND)
+        # # sizer.Add(richText, pos=(14,2), span=(2,3), flag=wx.EXPAND)
+        # sizer.Add(bmp, pos=(2,0), span = (20,10),flag=wx.EXPAND)
+        # sizer.AddGrowableRow(15)
+        # panel.SetSizer(sizer)
+        # panel.Fit()

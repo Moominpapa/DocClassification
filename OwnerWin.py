@@ -5,8 +5,6 @@ __author__ = 'moominpapa'
 
 import wx
 import copy
-import wx.calendar as cal
-import datetime
 
 class OwnerWin(wx.Dialog):
     def __init__(self, owner_list):

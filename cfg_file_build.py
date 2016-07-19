@@ -3,9 +3,14 @@
 """doc tree display and command response"""
 __author__ = 'moominpapa'
 
-import json
+import toolFunc
+import logging
 
-data_str_format = "%Y-%m-%d"
+logging.basicConfig(level=logging.DEBUG,
+                format='%(asctime)s %(filename)s[func:%(funcName)s] %(levelname)s %(message)s',
+                datefmt='%a, %d %b %Y %H:%M:%S',
+                filename='myapp.log',
+                filemode='w')
 
 #kw-keyword  sc-sub class De-Description
 class_definition_V1=[{"name":u"第一类","de":u"履历材料","sc":[
@@ -28,7 +33,7 @@ class_definition_V1=[{"name":u"第一类","de":u"履历材料","sc":[
                   ]
 
 #file_path=u'E:\project\DocClassification\PIC'
-file_path=u'C:\project\APP\DocClassification\PIC'
+file_path=[u'C:\project\APP\DocClassification\PIC']
 
 UnpackedFileList = [{'name':u'IMG01','files':ur"C:\project\APP\DocClassification\PIC\IMG01.jpg"}, \
                         {'name':u'IMG02','files':ur"C:\project\APP\DocClassification\PIC\IMG02.jpg"}, \
@@ -54,19 +59,9 @@ sys_cfg = {'class_definition':[class_definition_V1], \
 file_list = {'PackedFileList':PackedFileList, \
            'UnpackedFileList':UnpackedFileList,}
 
-def json_store_file(name, json_file):
-    with open(name, 'w') as f:
-        f.write(json.dumps(json_file))
-
-def json_read_file(name):
-     ret_file = None
-     with open(name, 'r') as f:
-        ret_file = json.load(f)
-     return ret_file
-
 if __name__ == '__main__':
-    json_store_file('sys_cfg.json', sys_cfg)
-    json_store_file('files_cfg.json', file_list)
+    toolFunc.json_store_file('sys_cfg.json', sys_cfg)
+    toolFunc.json_store_file('files_cfg.json', file_list)
 
-    print json_read_file('sys_cfg.json')
-    print json_read_file('files_cfg.json')
+    print toolFunc.json_read_file('sys_cfg.json')
+    print toolFunc.json_read_file('files_cfg.json')

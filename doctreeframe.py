@@ -8,6 +8,7 @@ import wx
 import wx.gizmos
 import os
 import datetime
+import logging
 
 from docctrl import *
 from FilterWin import *
@@ -15,12 +16,20 @@ from EditWin import *
 from NewWin import *
 from ImageWin import *
 from OwnerWin import *
+from PathWin import *
+
 
 #Colum list
 col_def = ({'name':u"文件",'width':200,'def':'name'},\
            {'name':u"描述",'width':180,'def':'de'},\
            {'name':u"形成时间",'width':100,'def':'time'},\
            {'name':u"所有者",'width':100,'def':'owner'})
+
+logging.basicConfig(level=logging.DEBUG,
+                format='%(asctime)s %(filename)s[func:%(funcName)s] %(levelname)s %(message)s',
+                datefmt='%a, %d %b %Y %H:%M:%S',
+                filename='myapp.log',
+                filemode='w')
 
 class MainTreeList(wx.Frame):
     def __init__(self):
@@ -62,29 +71,44 @@ class MainTreeList(wx.Frame):
         self.Bind(wx.EVT_TREE_ITEM_COLLAPSED, self.OnItemCollapsed, self.tree)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, self.tree)
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnActivated, self.tree)
-        self.Bind(wx.EVT_TREE_SEL_CHANGING,self.OnSelChanging,self.tree)
 
         #creat menu
-        menuBar = wx.MenuBar()# 创建一个菜单栏
-        data_menu = wx.Menu()
-        menuBar.Append(data_menu, u"数据")
-        filter_menu = data_menu.Append(-1,u"过滤器")
-        search_menu = data_menu.Append(-1,u'搜索器')
-        menu = wx.Menu()# 创建一个菜单
-        menuBar.Append(menu, u"编辑")# 添加菜单到菜单栏
-        new_menu = menu.Append(-1, u"创建")
-        edit_menu = menu.Append(-1, u"修改")
-        #remove_menu = menu.Append(-1, u"删除")
-        menu = wx.Menu()# 创建一个菜单
-        menuBar.Append(menu, u"配置")# 添加菜单到菜单栏
-        cfg_owner_menu = menu.Append(-1, u"人员列表")
-        cfg_class_menu = menu.Append(-1, u"文档类别")
-        self.Bind(wx.EVT_MENU, self.OnMenuFilter,filter_menu)
-        self.Bind(wx.EVT_MENU, self.OnFileNew, new_menu)
-        self.Bind(wx.EVT_MENU, self.OnFileEdit, edit_menu)
-        self.Bind(wx.EVT_MENU, self.OnCfgOwner, cfg_owner_menu)
-        self.Bind(wx.EVT_MENU, self.OnCfgClass, cfg_class_menu)
-        self.SetMenuBar(menuBar)
+        # menuBar = wx.MenuBar()# 创建一个菜单栏
+        # data_menu = wx.Menu()
+        # menuBar.Append(data_menu, u"数据")
+        # filter_menu = data_menu.Append(-1,u"过滤器")
+        # search_menu = data_menu.Append(-1,u'搜索器')
+        # menu = wx.Menu()# 创建一个菜单
+        # menuBar.Append(menu, u"编辑")# 添加菜单到菜单栏
+        # new_menu = menu.Append(-1, u"创建")
+        # edit_menu = menu.Append(-1, u"修改")
+        # #remove_menu = menu.Append(-1, u"删除")
+        # menu = wx.Menu()# 创建一个菜单
+        # menuBar.Append(menu, u"配置")# 添加菜单到菜单栏
+        # cfg_path_menu = menu.Append(-1, u"工作路径设置")
+        # cfg_seperate_bar = menu.Append(-1, u"")
+        # cfg_owner_menu = menu.Append(-1, u"人员列表")
+        # cfg_class_menu = menu.Append(-1, u"文档类别")
+        # self.Bind(wx.EVT_MENU, self.OnMenuFilter,filter_menu)
+        # self.Bind(wx.EVT_MENU, self.OnFileNew, new_menu)
+        # self.Bind(wx.EVT_MENU, self.OnFileEdit, edit_menu)
+        # self.Bind(wx.EVT_MENU, self.OnCfgOwner, cfg_owner_menu)
+        # self.Bind(wx.EVT_MENU, self.OnCfgClass, cfg_class_menu)
+        # self.SetMenuBar(menuBar)
+
+        menuData = ((u"数据",((u"过滤器", "", self.OnMenuFilter),\
+                    (u"搜索器", "", None))),\
+         (u"编辑",((u"创建", "", self.OnFileNew),\
+                    (u"修改", "", self.OnFileEdit),\
+                     (u"删除", "", None))),\
+         (u"配置",((u"工作路径设置", "", self.OnCfgPath),\
+                    (u"", "", None),\
+                    (u"人员列表", "", self.OnCfgOwner),\
+                    (u"文档类别", "", self.OnCfgClass)))\
+         )
+
+        toolFunc.CreateMenuBar(self,menuData)
+
 
     def UpdateTree(self):
         self.tree.DeleteChildren(self.root)
@@ -111,18 +135,6 @@ class MainTreeList(wx.Frame):
 
     def OnItemCollapsed(self, evt):
         print "OnItemCollapsed:", self.GetItemText(evt.GetItem())
-
-    def OnSelChanging(self,evt):
-        # selections = evt.GetEventObject().GetSelections()
-        # data = self.tree.GetItemPyData(selections[0])
-        # for select in selections:
-        #     cur_select = evt.GetEventObject().GetSelection()
-        #     date1 = self.tree.GetItemPyData(cur_select)
-        #     data = self.tree.GetItemPyData(select)
-        #     print data
-        # # if selections:
-        # #     evt.Veto()
-        print "OnSelChanging"
 
     def OnSelChanged(self, evt):
         image_path = None
@@ -170,21 +182,31 @@ class MainTreeList(wx.Frame):
 
     def OnFileEdit(self, evt):
         item_data =  self.tree.GetItemPyData(self.tree.GetSelection())
-        data = item_data['file']
-        if data and item_data['type'] == 'file_group_node':
-            edit_win = NewWin(self.docctrl.get_owner_list(),self.c_tree.keys(),self.unpacked_file_list, packed_file_list = data['files'], \
-                    win_title = u"编辑文件", file_name = data['name'], packed_file_id=data['id'],cs = data['class'], owner = data['owner'],de=data['de'], time = data['time'])
-            result = edit_win.ShowModal()
-            if result  == wx.ID_OK:
-                new_file = edit_win.GetNewData()
-                new_file['id'] = data['id']
-                self.docctrl.pack_file(new_file)
-                self.UpdateTree()
-        else:
-            dlg = wx.MessageDialog(None, u"请选择可修改的文档",u"输入错误",wx.OK | wx.ICON_EXCLAMATION)
-            dlg.ShowModal()
+        if item_data:
+            data = item_data['file']
+            if data and item_data['type'] == 'file_group_node':
+                edit_win = NewWin(self.docctrl.get_owner_list(),self.c_tree.keys(),self.unpacked_file_list, packed_file_list = data['files'], \
+                        win_title = u"编辑文件", file_name = data['name'], packed_file_id=data['id'],cs = data['class'], owner = data['owner'],de=data['de'], time = data['time'])
+                result = edit_win.ShowModal()
+                if result  == wx.ID_OK:
+                    new_file = edit_win.GetNewData()
+                    new_file['id'] = data['id']
+                    self.docctrl.pack_file(new_file)
+                    self.UpdateTree()
+            else:#invalid file node
+                dlg = wx.MessageDialog(None, u"请选择可修改的文档",u"输入错误",wx.OK | wx.ICON_EXCLAMATION)
+                dlg.ShowModal()
+        else:#invalid file node
+                dlg = wx.MessageDialog(None, u"请选择可修改的文档",u"输入错误",wx.OK | wx.ICON_EXCLAMATION)
+                dlg.ShowModal()
 
     #system configuration
+    def OnCfgPath(self,evt):
+        path_win = PathWin(self.docctrl.get_scan_path_list())
+        result = path_win.ShowModal()
+        if result  == wx.ID_OK:
+            self.docctrl.set_scan_path_list(path_win.GetNewData())
+
     def OnCfgOwner(self,evt):
         owner_win = OwnerWin(self.docctrl.get_owner_list())
         result = owner_win.ShowModal()
